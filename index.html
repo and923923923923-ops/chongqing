@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>重庆万豪行政公寓 · 出行指引</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      background: #f5f6fa;
+      color: #1e2a3a;
+      padding-bottom: 40px;
+      min-height: 100vh;
+    }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #e8ecf1; }
+    ::-webkit-scrollbar-thumb { background: #c8102e; border-radius: 4px; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #c8102e 0%, #a00d26 100%);
+      padding: 24px 20px 16px;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(200, 16, 46, 0.35);
+    }
+    .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+    .header h1 span { font-size: 26px; }
+    .header .sub { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+    /* 面板通用 */
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .panel h3 { font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .row input, .row select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #dde3ea;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    .row input:focus, .row select:focus { border-color: #c8102e; }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #c8102e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #a00d26; }
+    .btn.secondary { background: #5a6a7a; margin-top: 6px; }
+    .btn.secondary:hover { background: #3a4a5a; }
+    .hint { font-size: 12px; color: #8a9aaa; margin-top: 8px; line-height: 1.5; }
+    .hint a { color: #c8102e; }
+    .key-status { font-size: 13px; margin-top: 8px; }
+    .key-status.ok { color: #2e7d32; }
+    .key-status.warn { color: #e65100; }
+
+    /* 地图与结果 */
+    #map { width: calc(100% - 32px); height: 380px; border-radius: 16px; margin: 0 16px 16px; overflow: hidden; display: none; }
+    #result { margin: 0 16px 16px; background: #fff; border-radius: 16px; padding: 12px; font-size: 14px; line-height: 1.6; display: none; }
+
+    /* 分类标签 */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-wrap: nowrap;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs .tab {
+      flex-shrink: 0;
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      background: #e8ecf1;
+      color: #5a6a7a;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .tabs .tab:hover { background: #d5dbe3; }
+    .tabs .tab.active { background: #c8102e; color: #fff; box-shadow: 0 4px 12px rgba(200,16,46,0.30); }
+
+    /* 卡片列表 */
+    .list { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+    .card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.08); transform: translateY(-2px); border-color: rgba(200,16,46,0.10); }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .card-name { font-size: 17px; font-weight: 700; color: #1e2a3a; line-height: 1.3; }
+    .card-tag {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 12px;
+      background: #eef2f7;
+      color: #5a6a7a;
+      margin-top: 2px;
+    }
+    .card-tag.景点 { background: #e8f5e9; color: #2e7d32; }
+    .card-tag.商场 { background: #fff3e0; color: #e65100; }
+    .card-tag.夜市 { background: #fce4ec; color: #c62828; }
+    .card-tag.咖啡 { background: #e3f2fd; color: #0d47a1; }
+    .card-tag.紧急 { background: #ffebee; color: #b71c1c; }
+    .card-meta { font-size: 13px; color: #5a6a7a; margin-top: 6px; line-height: 1.6; }
+    .card-desc { font-size: 13px; color: #6a7a8a; margin-top: 6px; line-height: 1.6; }
+    .card-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .card-actions button {
+      flex: 1;
+      min-width: 110px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-nav { background: #c8102e; color: #fff; }
+    .btn-nav:hover { background: #a00d26; }
+    .btn-copy { background: #eef2f7; color: #3a4a5a; }
+    .btn-copy:hover { background: #dde3ea; }
+
+    .footer {
+      text-align: center;
+      padding: 20px 16px 8px;
+      font-size: 12px;
+      color: #aab5c5;
+      border-top: 1px solid #e8ecf1;
+      margin: 8px 16px 0;
+    }
+
+    @media (min-width: 640px) {
+      .list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding: 0 40px 12px; }
+      .tabs { padding: 0 40px 14px; }
+      .panel { margin: 16px 40px; }
+      #map { margin: 0 40px 16px; width: calc(100% - 80px); }
+      #result { margin: 0 40px 16px; }
+      .footer { margin: 8px 40px 0; }
+    }
+    @media (min-width: 1024px) {
+      .list { grid-template-columns: repeat(3, 1fr); padding: 0 60px 12px; }
+      .tabs { padding: 0 60px 14px; }
+      .panel { margin: 16px 60px; }
+      #map { margin: 0 60px 16px; width: calc(100% - 120px); }
+      #result { margin: 0 60px 16px; }
+      .footer { margin: 8px 60px 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <div class="header">
+    <h1><span>🚇</span> 重庆万豪行政公寓 · 出行指引</h1>
+    <div class="sub">📍 渝中区解放碑 · 临江门站 / 较场口站</div>
+  </div>
+
+  <!-- ===== KEY 输入面板 ===== -->
+  <div class="panel" id="keyPanel">
+    <h3>🔑 高德地图 API Key</h3>
+    <div class="row">
+      <input id="inputKey" type="text" placeholder="请输入高德 Web端(JS API) Key">
+    </div>
+    <div class="row">
+      <input id="inputSecurity" type="text" placeholder="请输入安全密钥 jscode（新Key需要）">
+    </div>
+    <button class="btn" onclick="saveAndLoad()">保存并加载地图</button>
+    <div class="key-status" id="keyStatus"></div>
+    <div class="hint">
+      Key 申请：<a href="https://lbs.amap.com/" target="_blank">高德开放平台</a> → 控制台 → 应用管理 → 创建应用 → 添加Key → 服务平台选「Web端(JS API)」。<br>
+      安全密钥在 Key 详情里可以找到。信息仅保存在你浏览器本地。
+    </div>
+  </div>
+
+  <!-- ===== 路线查询面板 ===== -->
+  <div class="panel" id="routePanel" style="display:none;">
+    <h3>🚇 路线查询</h3>
+    <div class="row">
+      <input id="start" type="text" placeholder="起点" value="重庆万豪行政公寓">
+    </div>
+    <div class="row">
+      <input id="end" type="text" placeholder="终点" value="李子坝站">
+    </div>
+    <div class="row">
+      <select id="travelMode">
+        <option value="transfer">🚇 公交地铁</option>
+        <option value="walking">🚶 步行</option>
+        <option value="driving">🚗 打车/驾车</option>
+      </select>
+    </div>
+    <button class="btn" onclick="planRoute()">查询路线</button>
+    <button class="btn secondary" onclick="resetKey()">重新设置 Key</button>
+  </div>
+
+  <!-- ===== 地图与结果 ===== -->
+  <div id="map"></div>
+  <div id="result"></div>
+
+  <!-- ===== 分类标签 ===== -->
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-cat="all">全部</button>
+    <button class="tab" data-cat="景点">🏛️ 景点</button>
+    <button class="tab" data-cat="商场">🛍️ 购物</button>
+    <button class="tab" data-cat="夜市">🌃 夜市</button>
+    <button class="tab" data-cat="咖啡">☕ 咖啡</button>
+    <button class="tab" data-cat="紧急">🆘 紧急</button>
+  </div>
+
+  <!-- ===== 卡片列表 ===== -->
+  <div class="list" id="list"></div>
+
+  <div class="footer">
+    <span>🚇 重庆万豪行政公寓 · 出行指引</span><br>
+    <span>数据仅供参考，请以实际运营为准</span>
+  </div>
+
+  <script>
+    // ============================================================
+    //  数据
+    // ============================================================
+    const DATA = [
+      // ===== 景点 =====
+      {
+        id: 1, cat: '景点', name: '李子坝轻轨穿楼',
+        meta: '📍 2号线李子坝站 · 从公寓约5站，15分钟',
+        desc: '网红打卡点，轻轨从居民楼中间穿过。临江门站乘2号线（往鱼洞方向）到李子坝站。',
+        nav: '李子坝站', navMode: 'transfer'
+      },
+      {
+        id: 2, cat: '景点', name: '解放碑步行街',
+        meta: '📍 步行约5分钟（360米）',
+        desc: '重庆地标，抗战胜利纪念碑，核心商业区。',
+        nav: '解放碑步行街', navMode: 'walking'
+      },
+      {
+        id: 3, cat: '景点', name: '洪崖洞',
+        meta: '📍 步行约10-15分钟（890米）',
+        desc: '现实版“千与千寻”，吊脚楼群，夜景绝美。',
+        nav: '洪崖洞', navMode: 'walking'
+      },
+      {
+        id: 4, cat: '景点', name: '十八梯',
+        meta: '📍 步行约10分钟',
+        desc: '老重庆风貌区，适合拍照。',
+        nav: '十八梯', navMode: 'walking'
+      },
+      {
+        id: 5, cat: '景点', name: '长江索道',
+        meta: '📍 步行约15分钟',
+        desc: '横跨长江的“空中巴士”，体验山城独特交通。',
+        nav: '长江索道', navMode: 'walking'
+      },
+      {
+        id: 6, cat: '景点', name: '朝天门广场',
+        meta: '📍 1号线至朝天门站 · 约15分钟',
+        desc: '两江交汇之处，来福士广场所在地。',
+        nav: '朝天门站', navMode: 'transfer'
+      },
+      {
+        id: 7, cat: '景点', name: '磁器口古镇',
+        meta: '📍 1号线至磁器口站 · 约35分钟',
+        desc: '千年古镇，重庆古城缩影。',
+        nav: '磁器口站', navMode: 'transfer'
+      },
+
+      // ===== 商场 =====
+      {
+        id: 10, cat: '商场', name: '来福士广场',
+        meta: '📍 1号线至朝天门站 · 约15分钟',
+        desc: '帆船造型地标，顶楼探索舱可俯瞰两江交汇。',
+        nav: '朝天门站', navMode: 'transfer'
+      },
+      {
+        id: 11, cat: '商场', name: '龙湖时代天街',
+        meta: '📍 1号线至石油路站 · 约20分钟',
+        desc: '重庆最大商场之一，A-E馆连通，地铁无缝连接。',
+        nav: '石油路站', navMode: 'transfer'
+      },
+      {
+        id: 12, cat: '商场', name: '万象城',
+        meta: '📍 2号线至谢家湾站 · 约25分钟',
+        desc: '高端路线，环境安静，有室内滑冰场。',
+        nav: '谢家湾站', navMode: 'transfer'
+      },
+      {
+        id: 13, cat: '商场', name: '观音桥北城天街',
+        meta: '📍 2号线→牛角沱换3号线至观音桥站 · 约25分钟',
+        desc: '老牌潮人聚集地，负一楼美食城平价好吃。',
+        nav: '观音桥站', navMode: 'transfer'
+      },
+
+      // ===== 夜市 =====
+      {
+        id: 20, cat: '夜市', name: '较场口夜市',
+        meta: '📍 步行约4分钟（266米）· ⭐ 步行可达',
+        desc: '重庆夜市“扛把子”，集装箱工业风，营业至凌晨2点。推荐现炸酥肉、烤脑花、冰粉。',
+        nav: '较场口站', navMode: 'walking'
+      },
+      {
+        id: 21, cat: '夜市', name: '八一好吃街',
+        meta: '📍 步行约5-8分钟',
+        desc: '解放碑旁，重庆美食集大成者。推荐军屯锅盔、鬼包子、酸辣粉。',
+        nav: '八一好吃街', navMode: 'walking'
+      },
+      {
+        id: 22, cat: '夜市', name: '观音桥好吃街',
+        meta: '📍 2号线→牛角沱换3号线至观音桥站 · 约25分钟',
+        desc: '经营面积1.6万平方米，超过1000种小吃。推荐丁家坡洋芋、刘酥肉。',
+        nav: '观音桥站', navMode: 'transfer'
+      },
+      {
+        id: 23, cat: '夜市', name: '九街（不夜九街）',
+        meta: '📍 同观音桥路线，到站后步行约10分钟 · 约30分钟',
+        desc: '重庆酒吧和潮人聚集地，通宵营业。',
+        nav: '观音桥站', navMode: 'transfer'
+      },
+      {
+        id: 24, cat: '夜市', name: '南滨路夜市',
+        meta: '📍 1号线→小什字换6号线至上新街站，打车约5分钟 · 约35分钟',
+        desc: '无敌江景，边看夜景边吃宵夜。',
+        nav: '上新街站', navMode: 'transfer'
+      },
+      {
+        id: 25, cat: '夜市', name: '回龙湾夜市',
+        meta: '📍 1号线→两路口换3号线至五公里站，步行约8分钟 · 约40分钟',
+        desc: '藏在重庆工商大学对面，下午4点开始，本地人才知道的实惠美食。',
+        nav: '五公里站', navMode: 'transfer'
+      },
+
+      // ===== 咖啡 =====
+      {
+        id: 30, cat: '咖啡', name: '弱水·老街咖啡',
+        meta: '📍 公寓楼下 OneMall万摩购物中心底商 · 步行1分钟',
+        desc: '手冲咖啡二三十元，花香型耶加雪菲、拿铁奶泡绵密。安静温馨，适合办公看书。',
+        nav: '临江门站', navMode: 'walking'
+      },
+      {
+        id: 31, cat: '咖啡', name: '慌张（解放碑店）',
+        meta: '📍 2号线至较场口站，步行约3分钟 · 约10分钟',
+        desc: '2016年开业的老牌精品咖啡馆，人均¥35。推荐脏咖啡、冰滴咖啡。',
+        nav: '较场口站', navMode: 'walking'
+      },
+      {
+        id: 32, cat: '咖啡', name: '能仁咖啡',
+        meta: '📍 较场口站9号口步行约3分钟 · 约8分钟',
+        desc: '开在寺庙门口，抽签选豆，美式¥25、拿铁¥28。大隐隐于市的独特体验。',
+        nav: '较场口站', navMode: 'walking'
+      },
+      {
+        id: 33, cat: '咖啡', name: '% Arabica 重庆',
+        meta: '📍 解放碑步行街区域 · 步行约8分钟',
+        desc: '极简风格，城市景观优美，拍照效果好。',
+        nav: '临江门站', navMode: 'walking'
+      },
+      {
+        id: 34, cat: '咖啡', name: '亚坤 Ya Kun（南洋早餐）',
+        meta: '📍 解放碑大都会东方广场L5 · 步行约10分钟',
+        desc: '新加坡国民早餐，咖椰吐司+半熟蛋+南洋咖啡。',
+        nav: '临江门站', navMode: 'walking'
+      },
+
+      // ===== 紧急 =====
+      {
+        id: 40, cat: '紧急', name: '万豪行政公寓前台',
+        meta: '📞 +86 23-6881 7777（24小时）',
+        desc: '公寓前台，可协助叫车、路线咨询、紧急联络。',
+        nav: '重庆万豪行政公寓', navMode: 'driving'
+      },
+      {
+        id: 41, cat: '紧急', name: '报警',
+        meta: '📞 110',
+        desc: '紧急报警电话。',
+        nav: '', navMode: ''
+      },
+      {
+        id: 42, cat: '紧急', name: '火警',
+        meta: '📞 119',
+        desc: '火灾报警电话。',
+        nav: '', navMode: ''
+      },
+      {
+        id: 43, cat: '紧急', name: '急救',
+        meta: '📞 120',
+        desc: '医疗急救电话。',
+        nav: '', navMode: ''
+      },
+      {
+        id: 44, cat: '紧急', name: '渝中区七星岗派出所',
+        meta: '📞 023-63843168',
+        desc: '公寓所在区域派出所。',
+        nav: '', navMode: ''
+      },
+      {
+        id: 45, cat: '紧急', name: '重庆市旅游局',
+        meta: '📞 023-63712218',
+        desc: '旅游投诉与咨询。',
+        nav: '', navMode: ''
+      }
+    ];
+
+    // ============================================================
+    //  状态
+    // ============================================================
+    let currentCat = 'all';
+    let amapLoaded = false;
+    let map, transfer, walking, driving;
+
+    // ============================================================
+    //  渲染卡片
+    // ============================================================
+    function renderCards() {
+      const list = document.getElementById('list');
+      let items = DATA;
+      if (currentCat !== 'all') {
+        items = items.filter(d => d.cat === currentCat);
+      }
+
+      if (items.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:40px;color:#8a9aaa;">暂无内容</div>';
+        return;
+      }
+
+      let html = '';
+      items.forEach(item => {
+        const navBtn = item.nav
+          ? `<button class="btn-nav" onclick="navigateTo('${item.nav.replace(/'/g, "\\'")}', '${item.navMode}')">🧭 导航至此</button>`
+          : '';
+        html += `
+          <div class="card">
+            <div class="card-header">
+              <div class="card-name">${item.name}</div>
+              <span class="card-tag ${item.cat}">${item.cat}</span>
+            </div>
+            <div class="card-meta">${item.meta}</div>
+            <div class="card-desc">${item.desc}</div>
+            <div class="card-actions">
+              ${navBtn}
+              <button class="btn-copy" onclick="copyText('${item.name.replace(/'/g, "\\'")}')">📋 复制名称</button>
+            </div>
+          </div>
+        `;
+      });
+      list.innerHTML = html;
+    }
+
+    // ============================================================
+    //  分类切换
+    // ============================================================
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        currentCat = this.dataset.cat;
+        renderCards();
+      });
+    });
+
+    // ============================================================
+    //  复制名称
+    // ============================================================
+    function copyText(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('已复制：' + text);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('已复制：' + text);
+      });
+    }
+
+    // ============================================================
+    //  高德地图 Key 加载
+    // ============================================================
+    function getSavedKey() { return localStorage.getItem('amap_key') || ''; }
+    function getSavedSecurity() { return localStorage.getItem('amap_security') || ''; }
+
+    window.addEventListener('load', function() {
+      const key = getSavedKey();
+      const security = getSavedSecurity();
+      if (key) {
+        document.getElementById('inputKey').value = key;
+        document.getElementById('inputSecurity').value = security;
+        loadAMap(key, security);
+      } else {
+        document.getElementById('keyStatus').textContent = '请填写 Key 后点击保存并加载';
+        document.getElementById('keyStatus').className = 'key-status warn';
+      }
+      renderCards();
+    });
+
+    function saveAndLoad() {
+      const key = document.getElementById('inputKey').value.trim();
+      const security = document.getElementById('inputSecurity').value.trim();
+      if (!key) { alert('请填写高德 Key'); return; }
+      localStorage.setItem('amap_key', key);
+      localStorage.setItem('amap_security', security);
+      loadAMap(key, security);
+    }
+
+    function resetKey() {
+      localStorage.removeItem('amap_key');
+      localStorage.removeItem('amap_security');
+      location.reload();
+    }
+
+    function loadAMap(key, security) {
+      if (amapLoaded) return;
+
+      if (security) {
+        window._AMapSecurityConfig = { securityJsCode: security };
+      }
+
+      document.getElementById('keyStatus').textContent = '正在加载高德地图…';
+      document.getElementById('keyStatus').className = 'key-status';
+
+      const script = document.createElement('script');
+      script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(key)}&plugin=AMap.Transfer,AMap.Walking,AMap.Driving`;
+      script.onload = function() {
+        amapLoaded = true;
+        document.getElementById('keyStatus').textContent = '✅ 地图加载成功';
+        document.getElementById('keyStatus').className = 'key-status ok';
+
+        document.getElementById('keyPanel').style.display = 'none';
+        document.getElementById('routePanel').style.display = 'block';
+        document.getElementById('map').style.display = 'block';
+        document.getElementById('result').style.display = 'block';
+
+        initMap();
+      };
+      script.onerror = function() {
+        document.getElementById('keyStatus').textContent = '❌ 加载失败，请检查 Key 或网络';
+        document.getElementById('keyStatus').className = 'key-status warn';
+      };
+      document.head.appendChild(script);
+    }
+
+    // ============================================================
+    //  地图初始化
+    // ============================================================
+    function initMap() {
+      map = new AMap.Map('map', {
+        zoom: 12,
+        center: [106.550464, 29.563761]
+      });
+
+      transfer = new AMap.Transfer({
+        map: map,
+        city: '重庆',
+        policy: AMap.TransferPolicy.LEAST_TIME,
+        panel: 'result'
+      });
+
+      walking = new AMap.Walking({
+        map: map,
+        panel: 'result'
+      });
+
+      driving = new AMap.Driving({
+        map: map,
+        policy: AMap.DrivingPolicy.LEAST_TIME,
+        panel: 'result'
+      });
+    }
+
+    // ============================================================
+    //  路线查询
+    // ============================================================
+    function planRoute() {
+      if (!transfer) { alert('地图尚未加载完成'); return; }
+
+      const start = document.getElementById('start').value.trim();
+      const end = document.getElementById('end').value.trim();
+      const mode = document.getElementById('travelMode').value;
+
+      if (!start || !end) { alert('请填写起点和终点'); return; }
+
+      document.getElementById('result').innerHTML = '规划中…';
+      map.clearMap();
+
+      if (mode === 'walking') {
+        walking.search([
+          { keyword: start, city: '重庆' },
+          { keyword: end, city: '重庆' }
+        ], function(status, result) {
+          if (status !== 'complete') {
+            document.getElementById('result').innerHTML = '步行路线规划失败，距离可能太远，试试公交或打车。';
+            console.error(result);
+          }
+        });
+      } else if (mode === 'driving') {
+        driving.search([
+          { keyword: start, city: '重庆' },
+          { keyword: end, city: '重庆' }
+        ], function(status, result) {
+          if (status !== 'complete') {
+            document.getElementById('result').innerHTML = '打车路线规划失败，请检查地点名称。';
+            console.error(result);
+          }
+        });
+      } else {
+        transfer.search([
+          { keyword: start, city: '重庆' },
+          { keyword: end, city: '重庆' }
+        ], function(status, result) {
+          if (status !== 'complete') {
+            document.getElementById('result').innerHTML = '公交路线规划失败，试试切换到步行或打车。';
+            console.error(result);
+          }
+        });
+      }
+    }
+
+    // ============================================================
+    //  导航至此（起点默认公寓，自动选择出行方式）
+    // ============================================================
+    function navigateTo(destination, mode) {
+      const from = prompt('请输入起点：', '重庆万豪行政公寓');
+      if (!from) return;
+
+      document.getElementById('start').value = from;
+      document.getElementById('end').value = destination;
+
+      const modeSelect = document.getElementById('travelMode');
+      if (mode && ['transfer', 'walking', 'driving'].includes(mode)) {
+        modeSelect.value = mode;
+      } else {
+        modeSelect.value = 'transfer';
+      }
+
+      planRoute();
+      document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+
+</body>
+</html>
